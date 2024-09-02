@@ -86,6 +86,7 @@ public class FPropertyTag
     public FGuid? PropertyGuid;
     public FPropertyTagType? Tag;
     public EPropertyTagFlags PropertyTagFlags;
+    public long Position;
 
     public EPropertyTagSerializeType SerializeType => PropertyTagFlags.HasFlag(EPropertyTagFlags.SkippedSerialize)
             ? EPropertyTagSerializeType.Skipped
@@ -102,7 +103,7 @@ public class FPropertyTag
         HasPropertyGuid = false;
         PropertyGuid = null;
 
-        var pos = Ar.Position;
+        Position = Ar.Position;
         try
         {
             Tag = FPropertyTagType.ReadPropertyTagType(Ar, PropertyType.Text, TagData, type);
@@ -112,7 +113,7 @@ public class FPropertyTag
             throw new ParserException($"Failed to read FPropertyTagType {TagData?.ToString() ?? PropertyType.Text} {Name.Text}", e);
         }
 
-        Size = (int) (Ar.Position - pos);
+        Size = (int) (Ar.Position - Position);
     }
 
     public FPropertyTag(FAssetArchive Ar, bool readData)

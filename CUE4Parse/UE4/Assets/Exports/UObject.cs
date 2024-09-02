@@ -58,6 +58,8 @@ public class UObject : IPropertyHolder
     public UStruct? SerializedSparseClassDataStruct;
     public FStructFallback? SerializedSparseClassData;
 
+    public long StartPosition;
+
     // public FObjectExport Export;
     public IPackage? Owner
     {
@@ -92,11 +94,36 @@ public class UObject : IPropertyHolder
 
     public virtual void Deserialize(FAssetArchive Ar, long validPos)
     {
+        StartPosition = Ar.Position;
+
         if (Ar.HasUnversionedProperties)
         {
             if (Class == null)
                 throw new ParserException(Ar, "Found unversioned properties but object does not have a class");
             DeserializePropertiesUnversioned(Properties = [], Ar, Class);
+            if (ExportType == "Sign_ModularFacility_C")
+            {
+                foreach (FPropertyTag tag in Properties)
+                {
+                    if (tag.Name.PlainText == "DisplayText")
+                    {
+                        (tag.Tag as StrProperty)!.Value += "!@#" + tag.Position;
+                    }
+                }
+            }
+            else if (ExportType == "TextRenderComponent")
+            {
+                if (Outer?.Name.StartsWith("Sign_ModularFacility_C") ?? false)
+                {
+                    foreach (FPropertyTag tag in Properties)
+                    {
+                        if (tag.Name.PlainText == "Text")
+                        {
+                            ((tag.Tag as TextProperty)!.Value.TextHistory as CUE4Parse.UE4.Objects.Core.i18N.FTextHistory.None).CultureInvariantString += "!@#" + (tag.Position + sizeof(uint) + sizeof(CUE4Parse.UE4.Objects.Core.i18N.ETextHistoryType) + sizeof(int));
+                        }
+                    }
+                }
+            }
         }
         else
         {
@@ -297,6 +324,9 @@ public class UObject : IPropertyHolder
     protected internal virtual void WriteJson(JsonWriter writer, JsonSerializer serializer)
     {
         var package = Owner;
+        
+        writer.WritePropertyName("StartPosition");
+        writer.WriteValue(StartPosition);
 
         // export type
         writer.WritePropertyName("Type");
