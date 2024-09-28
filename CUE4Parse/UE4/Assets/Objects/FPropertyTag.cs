@@ -102,6 +102,7 @@ public class FPropertyTag
         TagData = new FPropertyTagData(info.MappingType);
         HasPropertyGuid = false;
         PropertyGuid = null;
+        PropertyTagFlags = info.ArraySize > 1 ? EPropertyTagFlags.HasArrayIndex : EPropertyTagFlags.None;
 
         Position = Ar.Position;
         try
@@ -148,7 +149,6 @@ public class FPropertyTag
             if (PropertyTagFlags.HasFlag(EPropertyTagFlags.HasPropertyExtensions))
             {
                 var tagExtensions = Ar.Read<EPropertyTagExtension>();
-
                 if (tagExtensions.HasFlag(EPropertyTagExtension.OverridableInformation))
                 {
                     var OverrideOperation = Ar.Read<byte>(); // EOverriddenPropertyOperation
@@ -175,7 +175,6 @@ public class FPropertyTag
             if (Ar.Ver >= EUnrealEngineObjectUE5Version.PROPERTY_TAG_EXTENSION_AND_OVERRIDABLE_SERIALIZATION)
             {
                 var tagExtensions = Ar.Read<EPropertyTagExtension>();
-
                 if (tagExtensions.HasFlag(EPropertyTagExtension.OverridableInformation))
                 {
                     var OverrideOperation = Ar.Read<byte>(); // EOverriddenPropertyOperation
