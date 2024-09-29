@@ -101,29 +101,6 @@ public class UObject : IPropertyHolder
             if (Class == null)
                 throw new ParserException(Ar, "Found unversioned properties but object does not have a class");
             DeserializePropertiesUnversioned(Properties = [], Ar, Class);
-            if (ExportType == "Sign_ModularFacility_C")
-            {
-                foreach (FPropertyTag tag in Properties)
-                {
-                    if (tag.Name.PlainText == "DisplayText")
-                    {
-                        (tag.Tag as StrProperty)!.Value += "!@#" + tag.Position;
-                    }
-                }
-            }
-            else if (ExportType == "TextRenderComponent")
-            {
-                if (Outer?.Name.StartsWith("Sign_ModularFacility_C") ?? false)
-                {
-                    foreach (FPropertyTag tag in Properties)
-                    {
-                        if (tag.Name.PlainText == "Text")
-                        {
-                            ((tag.Tag as TextProperty)!.Value.TextHistory as CUE4Parse.UE4.Objects.Core.i18N.FTextHistory.None).CultureInvariantString += "!@#" + (tag.Position + sizeof(uint) + sizeof(CUE4Parse.UE4.Objects.Core.i18N.ETextHistoryType) + sizeof(int));
-                        }
-                    }
-                }
-            }
         }
         else
         {
@@ -298,6 +275,24 @@ public class UObject : IPropertyHolder
                 }
             }
         } while (it.MoveNext());
+
+        
+        foreach (FPropertyTag tag in properties)
+        {
+            switch (tag.Tag)
+            {
+            case StrProperty str:
+                str.Value += "!@#" + tag.Position;
+                break;
+
+            case TextProperty text:
+                if (text.Value.HistoryType == CUE4Parse.UE4.Objects.Core.i18N.ETextHistoryType.None)
+                {
+                    (text.Value.TextHistory as CUE4Parse.UE4.Objects.Core.i18N.FTextHistory.None).CultureInvariantString += "!@#" + (tag.Position + sizeof(uint) + sizeof(CUE4Parse.UE4.Objects.Core.i18N.ETextHistoryType) + sizeof(int));
+                }
+                break;
+            }
+        }
     }
 
     internal static void DeserializePropertiesTagged(List<FPropertyTag> properties, FAssetArchive Ar, bool isStruct)
