@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -27,7 +27,7 @@ namespace CUE4Parse.Example
 {
     public static class Program
     {
-        const string VERSION = "0.10.0.15580";
+        public const string VERSION = "0.10.0.15580";
 
         private const string _gameDirectory = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\pack\\vanilla\\" + VERSION;
         //private const string _gameDirectory = "C:\\Users\\yeshj\\Desktop\\temp"; // Change game directory path to the one you have.
@@ -58,7 +58,7 @@ namespace CUE4Parse.Example
             provider.Initialize(); // will scan local files and read them to know what it has to deal with (PAK/UTOC/UCAS/UASSET/UMAP)
             //provider.SubmitKey(new FGuid(), new FAesKey(_aesKey)); // decrypt basic info (1 guid - 1 key)
 
-            provider.LoadLocalization(ELanguage.English); // explicit enough
+            //provider.LoadLocalization(ELanguage.English); // explicit enough
 
             provider.Mount();
             //SaveAllToJson();
@@ -77,25 +77,10 @@ namespace CUE4Parse.Example
 
             DirectoryInfo baseDirectory = new DirectoryInfo("C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\tools\\UE4-DDS-Tools-v0.6.1-Batch\\exported");
 
-            foreach (var file in provider.Files)
-            {
-                if (!file.Value.IsUE4Package || file.Key.StartsWith("engine"))
-                {
-                    continue;
-                }
-
-                foreach (UObject uObject in provider.LoadAllObjects(file.Key))
-                {
-                    if (uObject is not UTexture2D t || t.Decode() is not { } bitmap) continue;
-
-                    var texturePath = FixAndCreatePath(baseDirectory, file.Value.PathWithoutExtension.Replace('/', '+'), "png");
-                    using var fs = new FileStream(texturePath, FileMode.Create, FileAccess.Write);
-                    using var data = bitmap.Encode(ETextureFormat.Png, 100);
-                    using var stream = data.AsStream();
-                    stream.CopyTo(fs);
-                }
-            }
+            Exporter._exportDirectory = FixAndCreatePath(baseDirectory, "");
+            Exporter.Export(ExportType.Texture);
         }
+
 
         public static void SaveAllDialogueAudioFiles()
         {
@@ -107,7 +92,7 @@ namespace CUE4Parse.Example
                 while (reader.ReadLine() is { } line)
                 {
                     string[] data = CSVParser.Split(line);
-                    var soundWave = provider.LoadObject(data[1].Split('.')[0]) as USoundWave;
+                    var soundWave = provider.LoadPackageObject(data[1].Split('.')[0]) as USoundWave;
                     Decode(soundWave, true, out _, out var audioData);
 
                     const string soundOutDir = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\out\\sound\\";
@@ -141,21 +126,21 @@ namespace CUE4Parse.Example
 
             //Console.WriteLine(variantJson); // Outputs the variantJson.
             
-            foreach (var file in provider.Files)
-            {
-                if (!file.Value.IsUE4Package || !file.Key.StartsWith("abioticfactor/content/map"))
-                {
-                    continue;
-                }
+            //foreach (var file in provider.Files)
+            //{
+            //    if (!file.Value.IsUePackage || !file.Key.StartsWith("abioticfactor/content/map"))
+            //    {
+            //        continue;
+            //    }
 
-                IEnumerable<UObject> uObjects = provider.LoadAllObjects(file.Key);
-                string json = JsonConvert.SerializeObject(uObjects, Formatting.Indented);
+            //    IEnumerable<UObject> uObjects = provider.LoadAllObjects(file.Key);
+            //    string json = JsonConvert.SerializeObject(uObjects, Formatting.Indented);
 
-                string outputPath = Path.Join(_outputDirectory, file.Value.Path);
-                Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
-                using StreamWriter writer = new StreamWriter(Path.ChangeExtension(outputPath, ".json"));
-                writer.Write(json);
-            }
+            //    string outputPath = Path.Join(_outputDirectory, file.Value.Path);
+            //    Directory.CreateDirectory(Path.GetDirectoryName(outputPath)!);
+            //    using StreamWriter writer = new StreamWriter(Path.ChangeExtension(outputPath, ".json"));
+            //    writer.Write(json);
+            //}
         }
 
         public static void Decode(this USoundWave soundWave, bool shouldDecompress, out string audioFormat, out byte[]? data)

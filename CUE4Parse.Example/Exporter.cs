@@ -42,15 +42,14 @@ public enum ExportType
 
 public static class Exporter
 {
-    private const string _archiveDirectory = "D:\\Games\\Fortnite\\FortniteGame\\Content\\Paks";
-    private const string _aesKey = "0x61D4FD0F3AC7768A08E82A99D275A13762A299FCC28CCF53C46BB221BB90D2B8";
-    private const string _mapping = "./++Fortnite+Release-33.20-CL-39082670-Windows_oo.usmap";
+    private const string _mapping = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\usmap\\" + Program.VERSION + ".usmap";
+    private const string _archiveDirectory = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\pack\\vanilla\\" + Program.VERSION;
 
-    private const string _exportDirectory = "./exports";
+    public static string _exportDirectory = "./exports";
 
     public static void ExportAll() => Export(ExportType.Texture | ExportType.Sound | ExportType.Mesh | ExportType.Animation);
 
-    private static void Export(ExportType type)
+    public static void Export(ExportType type)
     {
         Log.Logger = new LoggerConfiguration().WriteTo.Console(theme: AnsiConsoleTheme.Literate).CreateLogger();
 
@@ -58,14 +57,12 @@ public static class Exporter
         OodleHelper.DownloadOodleDll();
         OodleHelper.Initialize(OodleHelper.OODLE_DLL_NAME);
 
-        var version = new VersionContainer(EGame.GAME_UE5_6, ETexturePlatform.DesktopMobile);
-        var provider = new DefaultFileProvider(_archiveDirectory, SearchOption.TopDirectoryOnly, version)
-        {
-            MappingsContainer = new FileUsmapTypeMappingsProvider(_mapping)
-        };
+        var version = new VersionContainer(EGame.GAME_UE5_4, ETexturePlatform.DesktopMobile);
+        var provider = new DefaultFileProvider(_archiveDirectory, SearchOption.TopDirectoryOnly, version);
+        provider.MappingsContainer = new FileUsmapTypeMappingsProvider(_mapping);
         provider.Initialize();
-        provider.SubmitKey(new FGuid(), new FAesKey(_aesKey));
-        provider.PostMount();
+        //provider.SubmitKey(new FGuid(), new FAesKey(_aesKey));
+        provider.Mount();
 
         var files = provider.Files.Values
             .GroupBy(it => it.Path.SubstringBeforeLast('/'))
@@ -94,7 +91,17 @@ public static class Exporter
 
             Parallel.ForEach(packages, package =>
             {
+                if (package.Directory.ToLower().StartsWith("engine"))
+                {
+                    return;
+                }
+
                 if (!provider.TryLoadPackage(package, out var pkg)) return;
+
+                if (pkg.ExportMapLength != 1)
+                {
+                    return;
+                }
 
                 // optimized way of checking for exports type without loading most of them
                 for (var i = 0; i < pkg.ExportMapLength; i++)
@@ -185,8 +192,8 @@ public static class Exporter
 
     private static void WriteToFile(string folder, string fileName, byte[] bytes, string logMessage, ref int exportCount)
     {
-        Directory.CreateDirectory(Path.Combine(_exportDirectory, folder));
-        File.WriteAllBytesAsync(Path.Combine(_exportDirectory, folder, fileName), bytes);
+        string newFileName = folder.Replace('/', '+') + '+' + fileName;
+        File.WriteAllBytesAsync(Path.Combine(_exportDirectory, newFileName), bytes);
         WriteToLog(folder, logMessage, ref exportCount);
     }
 
