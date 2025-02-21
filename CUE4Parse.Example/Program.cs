@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
 using System.IO;
@@ -27,11 +27,13 @@ namespace CUE4Parse.Example
 {
     public static class Program
     {
-        private const string _gameDirectory = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\pack\\vanilla\\0.9.1.11753"; // Change game directory path to the one you have.
+        const string VERSION = "0.10.0.15580";
+
+        private const string _gameDirectory = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\pack\\vanilla\\" + VERSION;
         //private const string _gameDirectory = "C:\\Users\\yeshj\\Desktop\\temp"; // Change game directory path to the one you have.
         //private const string _aesKey = "0xF271F4B1EA375C42D3676058BAE8FBA295CB61F773070A706A48EAD7C6F98CDB";
 
-        private const string _mapping = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\usmap\\0.9.1.11753.usmap";
+        private const string _mapping = "C:\\Users\\yeshj\\Desktop\\folders\\Pycharm\\abiotic_korean\\archive\\usmap\\" + VERSION + ".usmap";
         //private const string _objectPath = "AbioticFactor/Content/";
         //private const string _objectName = "FortCosmeticCharacterPartVariant_0";
 
@@ -59,7 +61,8 @@ namespace CUE4Parse.Example
             provider.LoadLocalization(ELanguage.English); // explicit enough
 
             provider.Mount();
-            SaveAllToJson();
+            //SaveAllToJson();
+            SaveAllTextures();
         }
 
         public static void SaveAllTextures()
@@ -140,7 +143,7 @@ namespace CUE4Parse.Example
             
             foreach (var file in provider.Files)
             {
-                if (!file.Value.IsUE4Package || !file.Key.StartsWith("abioticfactor/content/blueprints/items/itemtable_global"))
+                if (!file.Value.IsUE4Package || !file.Key.StartsWith("abioticfactor/content/map"))
                 {
                     continue;
                 }
