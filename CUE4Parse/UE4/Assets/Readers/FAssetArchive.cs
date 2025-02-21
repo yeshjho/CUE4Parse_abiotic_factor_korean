@@ -1,7 +1,10 @@
 using System;
 using System.Collections.Generic;
+using System.Diagnostics.CodeAnalysis;
 using System.IO;
 using System.Runtime.CompilerServices;
+using System.Threading;
+using System.Threading.Tasks;
 using CUE4Parse.UE4.Assets.Exports;
 using CUE4Parse.UE4.Assets.Utils;
 using CUE4Parse.UE4.Exceptions;
@@ -98,13 +101,17 @@ namespace CUE4Parse.UE4.Assets.Readers
 
         public override UObject? ReadUObject() => ReadObject<UObject>().Value;
 
-        public bool TryGetPayload(PayloadType type, out FAssetArchive? ar)
+        public bool TryGetPayload(PayloadType type, [MaybeNullWhen(false)] out FAssetArchive ar)
         {
-            ar = null;
-            if (!_payloads.TryGetValue(type, out var ret)) return false;
-
-            ar = ret.Value;
-            return true;
+            try
+            {
+                ar = GetPayload(type);
+            }
+            catch
+            {
+                ar = null;
+            }
+            return ar != null;
         }
 
         public FAssetArchive GetPayload(PayloadType type)
@@ -141,6 +148,13 @@ namespace CUE4Parse.UE4.Assets.Readers
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override int Read(byte[] buffer, int offset, int count)
             => _baseArchive.Read(buffer, offset, count);
+
+        public override int ReadAt(long position, byte[] buffer, int offset, int count)
+            => _baseArchive.ReadAt(position, buffer, offset, count);
+        public override Task<int> ReadAtAsync(long position, byte[] buffer, int offset, int count, CancellationToken cancellationToken = default)
+            => _baseArchive.ReadAtAsync(position, buffer, offset, count, cancellationToken);
+        public override ValueTask<int> ReadAtAsync(long position, Memory<byte> memory, CancellationToken cancellationToken = default)
+            => _baseArchive.ReadAtAsync(position, memory, cancellationToken);
 
         [MethodImpl(MethodImplOptions.AggressiveInlining)]
         public override long Seek(long offset, SeekOrigin origin)

@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using CUE4Parse.UE4.Assets.Exports.Animation;
@@ -26,15 +26,7 @@ namespace CUE4Parse_Conversion.Meshes
 
             if (!originalSkeleton.TryConvert(out var bones, out _) || bones.Count == 0)
             {
-                Log.Logger.Warning($"Skeleton '{ExportName}' has no bone");
-                return;
-            }
-
-            if (Options.MeshFormat == EMeshFormat.UEFormat)
-            {
-                using var ueModelArchive = new FArchiveWriter();
-                new UEModel(originalSkeleton.Name, bones, originalSkeleton.Sockets, originalSkeleton.VirtualBones, Options).Save(ueModelArchive);
-                MeshLods.Add(new Mesh($"{PackagePath}.uemodel", ueModelArchive.GetBuffer(), []));
+                Log.Warning($"Skeleton '{ExportName}' has no bone");
                 return;
             }
 
@@ -45,6 +37,10 @@ namespace CUE4Parse_Conversion.Meshes
                 case EMeshFormat.ActorX:
                     ext = "pskx";
                     new ActorXMesh(bones, originalSkeleton.Sockets, Options).Save(Ar);
+                    break;
+                case EMeshFormat.UEFormat:
+                    ext = "uemodel";
+                    new UEModel(originalSkeleton.Name, bones, originalSkeleton.Sockets, originalSkeleton.VirtualBones, Options).Save(Ar);
                     break;
                 case EMeshFormat.Gltf2:
                     throw new NotImplementedException();
@@ -63,7 +59,7 @@ namespace CUE4Parse_Conversion.Meshes
 
             if (!originalMesh.TryConvert(out var convertedMesh) || convertedMesh.LODs.Count == 0)
             {
-                Log.Logger.Warning($"Mesh '{ExportName}' has no LODs");
+                Log.Warning($"Mesh '{ExportName}' has no LODs");
                 return;
             }
 
@@ -71,7 +67,7 @@ namespace CUE4Parse_Conversion.Meshes
             {
                 using var ueModelArchive = new FArchiveWriter();
                 new UEModel(originalMesh.Name, convertedMesh, originalMesh.BodySetup, Options).Save(ueModelArchive);
-                MeshLods.Add(new Mesh($"{PackagePath}.uemodel", ueModelArchive.GetBuffer(), []));
+                MeshLods.Add(new Mesh($"{PackagePath}.uemodel", ueModelArchive.GetBuffer(), convertedMesh.LODs[0].GetMaterials(options)));
                 return;
             }
 
@@ -81,7 +77,7 @@ namespace CUE4Parse_Conversion.Meshes
                 i++;
                 if (lod.SkipLod)
                 {
-                    Log.Logger.Warning($"LOD {i} in mesh '{ExportName}' should be skipped");
+                    Log.Warning($"LOD {i} in mesh '{ExportName}' should be skipped");
                     continue;
                 }
 
@@ -124,7 +120,7 @@ namespace CUE4Parse_Conversion.Meshes
 
             if (!originalMesh.TryConvert(out var convertedMesh) || convertedMesh.LODs.Count == 0)
             {
-                Log.Logger.Warning($"Mesh '{ExportName}' has no LODs");
+                Log.Warning($"Mesh '{ExportName}' has no LODs");
                 return;
             }
 
@@ -144,7 +140,7 @@ namespace CUE4Parse_Conversion.Meshes
             {
                 using var ueModelArchive = new FArchiveWriter();
                 new UEModel(originalMesh.Name, convertedMesh, originalMesh.MorphTargets, totalSockets.ToArray(), originalMesh.PhysicsAsset, Options).Save(ueModelArchive);
-                MeshLods.Add(new Mesh($"{PackagePath}.uemodel", ueModelArchive.GetBuffer(), []));
+                MeshLods.Add(new Mesh($"{PackagePath}.uemodel", ueModelArchive.GetBuffer(), convertedMesh.LODs[0].GetMaterials(options)));
                 return;
             }
 
@@ -154,7 +150,7 @@ namespace CUE4Parse_Conversion.Meshes
                 var lod = convertedMesh.LODs[lodIndex];
                 if (lod.SkipLod)
                 {
-                    Log.Logger.Warning($"LOD {i} in mesh '{ExportName}' should be skipped");
+                    Log.Warning($"LOD {i} in mesh '{ExportName}' should be skipped");
                     continue;
                 }
 
